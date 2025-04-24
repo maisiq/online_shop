@@ -1,0 +1,8 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    {% for order in orders %}
+        [{{order.created_at}}] {{order.order_id}} {{order.paid}} {{order.status}} <a href="">Подробнее</a>
+        <br><br>
+    {% endfor %}
+{% endblock content %}

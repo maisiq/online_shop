@@ -1,0 +1,122 @@
+{% extends 'base.html' %}
+{% block title %}Добавить доставку{% endblock title %}
+
+{% block content %}
+
+<form action="{% url 'delivery:create' %}" method="post">
+    {% csrf_token %}
+    {{form}}
+    <div id="map" style="width: 900px; height: 500px;margin:20px"></div>
+    <button class="btn" type="submit">Create</button>
+</form>
+
+
+<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@cdek-it/widget@3" charset="utf-8"></script>
+<script src="https://api-maps.yandex.ru/2.1/?apikey=1c6e3cf2-4a64-4f6c-87aa-8f24beb31896&lang=ru_RU"></script>
+<script>
+    
+    ymaps.ready(initMap);
+    var CURRENT_CITY;
+
+    function initMap() {
+        var map = new ymaps.Map("map", {
+            center: [55.751244, 37.618423], // Координаты центра (Москва)
+            zoom: 10
+        });
+
+        map.events.add('click', function (e) {
+            var coords = e.get('coords');
+
+            var newPlacemark = new ymaps.Placemark(coords, {
+                balloonContent: 'Клик сюда!',
+                hintContent: 'Метка'
+            });
+            map.geoObjects.add(newPlacemark);
+            // Геокодирование координат
+            ymaps.geocode(coords, { results: 1 }).then(function (res) {
+                var geoObject = res.geoObjects.get(0);
+                var address = geoObject.properties.get('metaDataProperty.GeocoderMetaData.text');
+                alert('Адрес: ' + address);
+            });
+        });
+        fetchCDEKPoints(map);
+
+        
+    }
+
+    async function fetchCDEKPoints(map) {
+
+        // Получаем город при загрузке карты
+        getCityName(map, map.getCenter());
+
+        // Отслеживаем изменение центра карты
+        map.events.add('boundschange', function () {
+            var newCenter = map.getCenter();
+            getCityName(map, newCenter);
+        });
+
+    }
+
+    async function getData(map, city) {
+        const data = await fetch(`http://localhost:8000/delivery/api/cdek/?city=${city}`)
+            .then(response => response.json())
+            .catch(error => console.error("Ошибка:", error));
+
+        data.forEach(point => {
+            const coords = [point.location.latitude, point.location.longitude]; // Координаты ПВЗ
+            const placemark = new ymaps.Placemark(coords, {
+                balloonContent: `<strong>${point.code}</strong><br>${point.location.address_full}`,
+                address: point.location.address_full
+            });
+            placemark.events.add('click', (e) => {
+                console.log(e)
+                console.log(placemark.properties.get('address'))
+
+                document.querySelector('#id_address').value = placemark.properties.get('address')
+            })
+            map.geoObjects.add(placemark);
+        });
+        // return data
+    }
+
+    // async function addPlacemarks(map, data) {
+    //     if (!data) return;
+    //     console.log(data)
+    //     data.forEach(point => {
+    //         const coords = [point.location.latitude, point.location.longitude]; // Координаты ПВЗ
+    //         const placemark = new ymaps.Placemark(coords, {
+    //             balloonContent: `<strong>${point.name}</strong><br>${point.address}`
+    //         });
+    //         placemark.events.add('click', (e) => {
+    //             console.log(e)
+    //             alert('Клик по метке! Координаты:')
+    //         })
+    //         map.geoObjects.add(placemark);
+    //     });
+    // }
+
+    async function getCityName(map, coords) {
+        ymaps.geocode(coords, { results: 1 }).then(function (res) {
+            var geoObject = res.geoObjects.get(0);
+            if (geoObject) {
+                // Извлекаем название города из свойств объекта
+                var city = geoObject.getLocalities()[0] || geoObject.getAdministrativeAreas()[0];
+                console.log('Localities: ', geoObject.getLocalities()[0], 'Areas:', geoObject.getAdministrativeAreas()[0])
+                if (city) {
+                    if (CURRENT_CITY != city) {
+                        getData(map, city)
+                        CURRENT_CITY = city
+                    }
+                    else {console.log('it is the same city')}
+                    // addPlacemarks(map, data)
+                } else {
+                    console.log("Город не определен");
+                }
+            }
+        });
+    }
+
+</script>
+
+    
+{% endblock content %}

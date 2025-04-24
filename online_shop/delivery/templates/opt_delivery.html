@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+{% block title %}Выберите доставку{% endblock title %}
+
+{% block content %}
+    
+    <style>
+        .btn-href {
+            border: none;
+            display: block;
+            max-width: 200px;
+            border: 1px solid black;
+            text-decoration: none;
+            border-radius: 5px;
+            text-align: center;
+            padding: 5px 10px;
+            color: black;
+            margin: 5px;
+        }
+
+        .btn-green {
+            background-color: rgb(88, 199, 88);
+        }
+    </style>
+
+
+    <form action="{% url 'orders:create' %}" method="post">
+        {% csrf_token %}
+        {{form}}
+        <a class="btn-href btn-green" href="{% url 'delivery:create' %}">Добавить новый адрес</a>
+        {% for item in order_items %}
+            <div class="cart__product">
+                <div class="cart__product-info">
+                    {{item.product.name}} | {{item.amount}} | {{item.price}}
+                </div>
+            </div>
+        {% endfor %}
+        <button class="btn" type="submit">Оплатить</button>
+    </form>
+    
+{% endblock content %}

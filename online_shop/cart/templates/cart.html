@@ -1,0 +1,116 @@
+{% extends 'base.html' %}
+{% block title %}Cart{% endblock title %}
+{% block content %}
+        <!-- <div class="cart">
+            {% if cart %}
+                <form action="{% url 'cart:clear' %}" method="post">
+                    <input type="text" name="product_id" value="{{ item.product.id }}" hidden>
+                    <button type="submit">Очистить корзину</button>
+                </form>
+            
+                <div class="cart__items">
+                    {% for item in cart %}
+                        <div class="cart__product">
+                            <div class="cart__product-info">
+                                {{item.product}} {{item.price}} {{item.amount}}
+                            </div>
+                            <div class="cart__product-action">
+                                <a class="btn" href="{% url 'cart:decrease' item.product.id %}">Less</a>
+                                <a class="btn" href="{% url 'cart:add' item.product.id %}">More</a>
+                                <a class="btn" href="{% url 'cart:delete' item.product.id %}">Delete</a>
+                            </div>
+                
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        </div> -->
+
+            <!-- {% for field in form %}
+                    <div class="field">
+                        {{ field.id_for_label }}<br>
+                        {{ field }}
+                        {% for product in field.field.queryset %}
+                            {{product}}
+                        {% endfor %}
+                    </div> 
+                {% endfor %} -->
+
+    {% if cart %}
+        <form action="{% url 'cart:cart' %}" method="post">
+            {% csrf_token %}
+            {% if form.errors %}
+                <ul class="errors">
+                    {% for field in form %}
+                        {% for error in field.errors %}
+                            <li>{{ field.label }}: {{ error }}</li>
+                        {% endfor %}
+                    {% endfor %}
+                    {% for error in form.non_field_errors %}
+                        <li>{{ error }}</li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+            
+            <div class="cart__items">
+                {% for item in cart %}
+                        <div class="cart__product">
+                            <div class="cart__product-info">
+                                <input type="checkbox" name="{{ form.items.html_name }}" value="{{ item.product.id }}" checked>
+                                {{item.product}} {{item.price}} {{item.amount}} | {{ item.id }}
+                            </div>
+                            <div class="cart__product-action">
+                                <a class="btn" href="{% url 'cart:decrease' item.product.id %}">Less</a>
+                                <a class="btn" href="{% url 'cart:add' item.product.id %}">More</a>
+                                <a class="btn" href="{% url 'cart:delete' item.product.id %}">Delete</a>
+                            </div>
+                
+                        </div>
+                {% endfor %}
+<!-- 
+                {% for checkbox in form.items.field.choices %}
+                    {% with form.items.auto_id|add:"_"|add:forloop.counter0 as checkbox_id %}
+                        <label for="{{ checkbox_id }}">
+                            <div class="cart__product">
+                                <div class="cart__product-info">
+                                    <input type="checkbox" name="{{ form.items.html_name }}" value="{{ checkbox.0 }}" id="{{ checkbox_id }}" checked>
+                                    {{ checkbox.1 }} ({{ checkbox_id }})
+                                </div>
+                                <div class="cart__product-action">
+                                    {% comment %}<a class="btn" href="{% url 'cart:decrease' item.product.id %}">Less</a>
+                                    <a class="btn" href="{% url 'cart:add' item.product.id %}">More</a>
+                                    <a class="btn" href="{% url 'cart:delete' item.product.id %}">Delete</a> {% endcomment %}
+                                </div>
+                            </div>
+                        </label>
+
+                        
+                    {% endwith %}
+                {% endfor %} -->
+            </div>
+
+            <button type="submit" id="submit-btn" >Перейти к оформлению</button>
+        </form>
+
+        <!-- <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const submitBtn = document.getElementById('submit-btn');
+            const checkboxes = document.querySelectorAll('input[type="checkbox"][name="items"]');
+
+            // Функция для проверки состояния чекбоксов
+            function updateButtonState() {
+                const isAnyChecked = Array.from(checkboxes).some(checkbox => checkbox.checked);
+                submitBtn.disabled = !isAnyChecked;
+            }
+
+            // Проверяем состояние при загрузке страницы
+            updateButtonState();
+
+            // Отслеживаем изменения состояния чекбоксов
+            checkboxes.forEach(checkbox => {
+                checkbox.addEventListener('change', updateButtonState);
+            });
+        });
+        </script> -->
+    {% endif %}
+{% endblock content %}

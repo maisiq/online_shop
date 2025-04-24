@@ -1,0 +1,13 @@
+{% extends 'base.html' %}
+{% block title %}{{product.name}}{% endblock title %}
+
+{% block content %}
+    <h2>{{product.name}}</h2>
+    {{product.description}}<br>
+    {{product.price}}<br>
+    <img src="{{product.cover.url}}" alt="" srcset="" style="width: 200px">
+
+    {% for c in product.category.get_ancestors %}
+        {{c}}
+    {% endfor %}
+{% endblock content %}

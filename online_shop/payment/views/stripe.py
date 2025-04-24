@@ -1,0 +1,92 @@
+import json
+from decimal import ROUND_HALF_UP, Decimal
+
+import stripe
+from django.http import Http404, HttpRequest, HttpResponse, JsonResponse
+from django.shortcuts import redirect, render
+from django.urls import reverse
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_POST
+
+from online_shop.orders.models import Order
+from online_shop.payment.config import stripe_config
+
+stripe.api_key = stripe_config.API_KEY
+
+
+# @require_POST
+def create_checkout_session(r: HttpRequest):
+    if not (order_id := r.GET.get('order_id')):
+        raise Http404('Order id не передан')
+    try:
+        order = Order.objects.prefetch_related('items__product').get(order_id=order_id)
+        line_items = []
+
+        print('create_checkout_session: ', order)
+        print('create_checkout_session: ', list(order.items.all()))
+        for item in order.items.all():
+            data = {
+                'price_data': {
+                    'currency': item.currency,
+                    'product_data': {'name': item.product.name},
+                    'unit_amount': int((item.price * 100).quantize(Decimal('1'), rounding=ROUND_HALF_UP)),
+                },
+                'quantity': item.amount
+            }
+            line_items.append(data)
+
+        checkout_session = stripe.checkout.Session.create(
+            line_items=line_items,
+            mode='payment',
+            success_url=r.build_absolute_uri(reverse('payment:stripe_success')),
+            cancel_url=r.build_absolute_uri('/cancel.html'),
+            metadata={
+                'order_id': order_id
+            }
+            # currency='rub',
+        )
+    except Exception as e:
+        print(e)
+        return redirect('/')
+
+    # return JsonResponse(line_items, safe=False)
+    return redirect(checkout_session.url, code=303)
+
+
+def success(r: HttpRequest):
+    return JsonResponse({'success': True})
+
+@require_POST
+@csrf_exempt
+def webhook(r: HttpRequest):
+    payload = r.body
+    event = None
+
+    # sig_header = r.headers.get('Stripe-Signature')
+
+    # try:
+    #     event = stripe.Webhook.construct_event(
+    #         payload, sig_header, endpoint_secret
+    #     )
+    # except stripe.SignatureVerificationError:
+    #     return 'Invalid signature', 400
+    
+    try:
+        event = stripe.Event.construct_from(
+            json.loads(payload), stripe.api_key
+        )
+    except ValueError as e:
+        # Invalid payload
+        return HttpResponse(status=400)
+
+    # Handle the event
+    if event.type == 'payment_intent.succeeded':
+        payment_intent: stripe.PaymentIntent = event.data.object 
+        # print(payment_intent)
+    elif event.type == 'checkout.session.completed':
+        checkout_session_completed: stripe.PaymentIntent = event.data.object 
+        if order_id := checkout_session_completed.metadata.get('order_id'):
+            order = Order.objects.get(order_id=order_id)
+            order.paid = True
+            order.save()
+    return HttpResponse(status=200)

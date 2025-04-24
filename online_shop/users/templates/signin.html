@@ -1,0 +1,10 @@
+{% extends 'base.html' %}
+{% block title %}Вход{% endblock title %}
+
+{% block content %}
+    <form action="{% url 'users:signin' %}" method="post">
+        {% csrf_token %}
+        {{form}}
+        <button type="submit">Войти</button>
+    </form>
+{% endblock content %}
