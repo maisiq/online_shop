@@ -67,50 +67,30 @@
                 
                         </div>
                 {% endfor %}
-<!-- 
-                {% for checkbox in form.items.field.choices %}
-                    {% with form.items.auto_id|add:"_"|add:forloop.counter0 as checkbox_id %}
-                        <label for="{{ checkbox_id }}">
-                            <div class="cart__product">
-                                <div class="cart__product-info">
-                                    <input type="checkbox" name="{{ form.items.html_name }}" value="{{ checkbox.0 }}" id="{{ checkbox_id }}" checked>
-                                    {{ checkbox.1 }} ({{ checkbox_id }})
-                                </div>
-                                <div class="cart__product-action">
-                                    {% comment %}<a class="btn" href="{% url 'cart:decrease' item.product.id %}">Less</a>
-                                    <a class="btn" href="{% url 'cart:add' item.product.id %}">More</a>
-                                    <a class="btn" href="{% url 'cart:delete' item.product.id %}">Delete</a> {% endcomment %}
-                                </div>
-                            </div>
-                        </label>
-
-                        
-                    {% endwith %}
-                {% endfor %} -->
             </div>
 
             <button type="submit" id="submit-btn" >Перейти к оформлению</button>
         </form>
 
-        <!-- <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            const submitBtn = document.getElementById('submit-btn');
-            const checkboxes = document.querySelectorAll('input[type="checkbox"][name="items"]');
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                const submitBtn = document.getElementById('submit-btn');
+                const checkboxes = document.querySelectorAll('input[type="checkbox"][name="items"]');
 
-            // Функция для проверки состояния чекбоксов
-            function updateButtonState() {
-                const isAnyChecked = Array.from(checkboxes).some(checkbox => checkbox.checked);
-                submitBtn.disabled = !isAnyChecked;
-            }
+                // Функция для проверки состояния чекбоксов
+                function updateButtonState() {
+                    const isAnyChecked = Array.from(checkboxes).some(checkbox => checkbox.checked);
+                    submitBtn.disabled = !isAnyChecked;
+                }
 
-            // Проверяем состояние при загрузке страницы
-            updateButtonState();
+                // Проверяем состояние при загрузке страницы
+                updateButtonState();
 
-            // Отслеживаем изменения состояния чекбоксов
-            checkboxes.forEach(checkbox => {
-                checkbox.addEventListener('change', updateButtonState);
+                // Отслеживаем изменения состояния чекбоксов
+                checkboxes.forEach(checkbox => {
+                    checkbox.addEventListener('change', updateButtonState);
+                });
             });
-        });
-        </script> -->
+        </script>
     {% endif %}
 {% endblock content %}
