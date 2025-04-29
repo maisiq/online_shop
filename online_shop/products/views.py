@@ -13,11 +13,9 @@ from .models import Category, Discount, Product
 
 
 def products(r: HttpRequest):
-    cart = Cart(r.session)
     products = Product.objects.all()
 
     context = {
-        'cart': cart,
         'products': products,
     }
     return render(r, 'index.html', context)

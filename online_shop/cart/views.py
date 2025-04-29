@@ -16,7 +16,7 @@ class CartView(TemplateView):
     def get(self, request, *args, **kwargs):
         cart = Cart(request.session)
         form = SelectItemsForm(items_id=cart.get_items_id())
-        return self.render_to_response({'cart': cart, 'form': form})
+        return self.render_to_response({'form': form})
 
     def post(self, request: HttpRequest, *args, **kwargs):
         cart = Cart(request.session)
@@ -35,14 +35,14 @@ class CartView(TemplateView):
                     for_order.add(product_id, amount=item['amount'], overwrite=True)
 
             return redirect('delivery:choose')
-        return self.render_to_response({'cart': cart, 'form': form})
+        return self.render_to_response({'form': form})
 
 
 def cart(request: HttpRequest):
     cart = Cart(request.session)
     form = SelectItemsForm(items_id=cart.get_items_id())
     
-    return render(request, 'cart.html', {'cart': cart, 'form': form})
+    return render(request, 'cart.html', {'form': form})
 
 
 @csrf_exempt
