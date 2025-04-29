@@ -36,5 +36,20 @@
         {% endfor %}
         <button class="btn" type="submit">Оплатить</button>
     </form>
-    
+
+    Промокод:
+    {% if cart.get_discount %}
+        {% with discount=cart.get_discount %}
+            {{discount.name}} ({{discount.value}}%)
+        {% endwith %}
+        <a href="{% url 'products:discount_remove' %}">Отменить</a>
+    {% else %}
+        <form action="{% url 'products:discount' %}" method="post">
+            {% csrf_token %}
+            {{ add_delivery_form }}
+
+            <button type="submit">Применить</button>
+        </form>
+    {% endif %}<br><br>
+    total: {{cart.total}}
 {% endblock content %}

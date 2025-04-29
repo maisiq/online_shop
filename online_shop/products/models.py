@@ -1,8 +1,9 @@
 import datetime as dt
+from decimal import ROUND_HALF_UP, Decimal
 
+from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
-from django.db.models.manager import BaseManager
 from mptt.models import MPTTModel, TreeForeignKey
 from slugify import slugify
 from uuid_extensions import uuid7
@@ -23,11 +24,6 @@ class Category(MPTTModel):
         if not self.slug:
             self.slug = slugify(self.name)
         return super().save(*args, **kwargs)
-    
-    # async def asave(self, force_insert = ..., force_update = ..., using = ..., update_fields = ...):
-    #     if not self.slug:
-    #         self.slug = slugify(self.name)
-    #     return await super().asave(force_insert=force_insert, force_update=force_update, using=using, update_fields=update_fields)
 
     def __str__(self):
         return self.name
@@ -44,7 +40,8 @@ class Product(models.Model):
         max_length=256, blank=False, 
         null=False,
     )
-    price = models.DecimalField(
+    _price = models.DecimalField(
+        db_column='price',
         validators=[MinValueValidator(0)],
         max_digits=10,
         decimal_places=2,
@@ -54,6 +51,20 @@ class Product(models.Model):
     description = models.TextField()
     category = models.ForeignKey(Category, on_delete=models.SET_NULL, null=True, blank=False)
     discount = models.ForeignKey('products.Discount', on_delete=models.SET_NULL, null=True, blank=True)
+
+    def clean(self):
+        if self.discount and self.discount.type != Discount.DiscountType.PRODUCT_WIDE:
+            raise ValidationError('Можно привязать только скидку типа "product"')
+
+    @property
+    def price(self):
+        if not self.discount:
+            return self._price
+        price = (self._price * Decimal((1 - self.discount.value / 100))).quantize(Decimal('1'), rounding=ROUND_HALF_UP)
+        return price
+    
+    def get_old_price(self):
+        return self._price
 
 
 class Discount(models.Model):
@@ -81,3 +92,6 @@ class Discount(models.Model):
         return False
 
     # check DateTime format in save method
+
+    def __str__(self):
+        return f'{self.type}, {self.name}, {self.value}%'

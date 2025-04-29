@@ -2,12 +2,12 @@ import copy
 import uuid
 from collections.abc import Iterator
 from dataclasses import dataclass
-from decimal import Decimal
+from decimal import ROUND_HALF_UP, Decimal
 
 from django.conf import settings
 from django.contrib.sessions.backends.base import SessionBase
 
-from online_shop.products.models import Product
+from online_shop.products.models import Discount, Product
 
 
 @dataclass
@@ -16,6 +16,8 @@ class ProductDTO:
     price: Decimal
     amount: int
 
+
+DISCOUNT_KEY = '_DISCOUNT'
 
 class Cart:
     def __init__(self, session: SessionBase, session_key: str = settings.CART_ID):
@@ -65,10 +67,27 @@ class Cart:
         full_price = 0
         for item in self.__cart.values():
             full_price += item['amount'] * Decimal(item['price'])
+        if discount_id := self.__session.get(DISCOUNT_KEY):
+            discount = Discount.objects.get(name=discount_id)
+            full_price = (full_price * Decimal((1 - discount.value / 100))).quantize(Decimal('1'), rounding=ROUND_HALF_UP)
         return full_price
 
     def get_items_id(self):
         return self.__cart.keys()
+    
+    def get_discount(self) -> Discount | None:
+        discount_id = self.__session.get(DISCOUNT_KEY)
+        if discount_id:
+            return Discount.objects.filter(name=discount_id).first()
+
+    def apply_discount(self, discount: Discount):
+        if discount.type != Discount.DiscountType.PRODUCT_WIDE and discount.is_active:
+            self.__session[DISCOUNT_KEY] = discount.name
+        self._save()
+
+    def remove_discount(self):
+        self.__session[DISCOUNT_KEY] = None
+        self._save()
 
     def _save(self):
         self.__session.modified = True
