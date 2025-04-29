@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import Category, Product
+from .models import Category, Discount, Product
 
 
 @admin.register(Category)
@@ -23,3 +23,8 @@ class ProductAdmin(admin.ModelAdmin):
 
     def hierarchy(self, obj):
         return ' -> '.join(anc.name for anc in obj.category.get_ancestors(include_self=True))
+
+
+@admin.register(Discount)
+class DiscountAdmin(admin.ModelAdmin):
+    list_display = ['type', 'name', 'value', 'start_at', 'expired_at', 'is_active']

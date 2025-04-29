@@ -2,7 +2,7 @@ from urllib.parse import urlencode
 
 from django.conf import settings
 from django.http import HttpRequest, JsonResponse
-from django.shortcuts import redirect, render
+from django.shortcuts import redirect
 from django.urls import reverse
 from django.views.generic import ListView, View
 
@@ -35,19 +35,21 @@ class CreateOrderView(View):
 
         if form.is_valid():
             cart = Cart(request.session, settings.CURRENT_ORDER_KEY)
+
             order = Order.objects.create(
                 customer=request.user,
                 delivery=form.cleaned_data['delivery'],
+                discount=cart.get_discount()
             )
             for item in cart:
-                order_item = OrderItem.objects.create(
+                OrderItem.objects.create(
                     order=order,
                     product=item['product'],
-                    price=item['price'], # fix?
-                    currency=item['product'].currency,  # fix
+                    price=item['price'],
+                    currency=item['product'].currency,
                     amount=item['amount'],
-                    # discount=...
                 )
+            cart.clear()
             base_redirect_url = reverse('payment:stripe_session')
             query_string = urlencode({'order_id': order.order_id})
             return redirect(f'{base_redirect_url}?{query_string}')

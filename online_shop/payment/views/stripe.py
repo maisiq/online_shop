@@ -3,7 +3,7 @@ from decimal import ROUND_HALF_UP, Decimal
 
 import stripe
 from django.http import Http404, HttpRequest, HttpResponse, JsonResponse
-from django.shortcuts import redirect, render
+from django.shortcuts import redirect
 from django.urls import reverse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
@@ -21,9 +21,8 @@ def create_checkout_session(r: HttpRequest):
     try:
         order = Order.objects.prefetch_related('items__product').get(order_id=order_id)
         line_items = []
+        coupon = None
 
-        print('create_checkout_session: ', order)
-        print('create_checkout_session: ', list(order.items.all()))
         for item in order.items.all():
             data = {
                 'price_data': {
@@ -35,6 +34,12 @@ def create_checkout_session(r: HttpRequest):
             }
             line_items.append(data)
 
+        if order.discount:
+            coupon = stripe.Coupon.create(
+                percent_off=order.discount.value,
+                duration='once'
+            )
+
         checkout_session = stripe.checkout.Session.create(
             line_items=line_items,
             mode='payment',
@@ -42,7 +47,10 @@ def create_checkout_session(r: HttpRequest):
             cancel_url=r.build_absolute_uri('/cancel.html'),
             metadata={
                 'order_id': order_id
-            }
+            },
+            discounts=[{
+                'coupon': coupon and coupon.id,
+            }],
             # currency='rub',
         )
     except Exception as e:
