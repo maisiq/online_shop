@@ -7,6 +7,7 @@ from django.urls import reverse_lazy
 from django.views.generic import FormView
 
 from online_shop.cart.cart import Cart
+from online_shop.products.forms import AddDiscountForm
 
 from .config import cdek_settings
 from .forms import CreateDeliveryForm, OptDeliveryForm
@@ -16,11 +17,11 @@ from .utils import get_cdek_token
 
 def cdek_deliverypoints(request: HttpRequest):
     '''
-        Returns list of delivery points from CDEK API.
-        Points can be used for interative map in frontend
+    Returns list of delivery points from CDEK API.
+    Points can be used for interative map in frontend
 
-        Response from cdek_settings.SUGGEST_CITIES_URL returns list of dicts with format:
-            {'code': int, 'city_uuid': str, 'full_name': str}
+    Response from cdek_settings.SUGGEST_CITIES_URL returns list of dicts with format:
+        {'code': int, 'city_uuid': str, 'full_name': str}
     '''
 
     city = request.GET.get('city')
@@ -50,9 +51,9 @@ class OptDeliveryView(FormView):
     
     def get(self, request: HttpRequest, *args, **kwargs):
         form: OptDeliveryForm = self.get_form()
+        add_delivery_form = AddDiscountForm()
         items = Cart(request.session, settings.CURRENT_ORDER_KEY)
-        cart = Cart(request.session)
-        return self.render_to_response({'form': form, 'order_items': items, 'cart': cart})
+        return self.render_to_response({'form': form, 'order_items': items, 'add_delivery_form': add_delivery_form})
 
     def get_form_kwargs(self) -> dict:
         kwargs = super().get_form_kwargs()
@@ -67,8 +68,7 @@ class AddDeliveryView(FormView):
     success_url = reverse_lazy('delivery:choose')
 
     def get(self, request: HttpRequest, *args, **kwargs):
-        cart = Cart(request.session)
-        return self.render_to_response({'form': self.get_form(), 'cart': cart})
+        return self.render_to_response({'form': self.get_form()})
 
     def form_valid(self, form: CreateDeliveryForm):
         form.instance.customer = self.request.user

@@ -17,13 +17,6 @@ class OrderListView(ListView):
     template_name = 'order_list.html'
     context_object_name = 'orders'
 
-    def get_context_data(self, **kwargs):
-        ctx = super().get_context_data(**kwargs)
-
-        cart = Cart(self.request.session)
-        ctx['cart'] = cart
-        return ctx
-
     def get_queryset(self):
         qs = super().get_queryset()
         return qs.filter(customer=self.request.user).prefetch_related('items').all()
