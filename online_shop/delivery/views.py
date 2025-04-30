@@ -31,7 +31,7 @@ def cdek_deliverypoints(request: HttpRequest):
     access_token = get_cdek_token()
 
     headers = {
-        'Authorization': f'Bearer {access_token}' + 'b',
+        'Authorization': f'Bearer {access_token}',
         'Content-Type': 'application/json'
     }
     if city:
