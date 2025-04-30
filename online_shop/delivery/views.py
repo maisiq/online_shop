@@ -1,6 +1,7 @@
+import logging
+
 import requests
 from django.conf import settings
-from django.forms import BaseModelForm
 from django.http import HttpRequest
 from django.http.response import JsonResponse
 from django.urls import reverse_lazy
@@ -30,17 +31,28 @@ def cdek_deliverypoints(request: HttpRequest):
     access_token = get_cdek_token()
 
     headers = {
-        "Authorization": f"Bearer {access_token}",
-        "Content-Type": "application/json"
+        'Authorization': f'Bearer {access_token}',
+        'Content-Type': 'application/json'
     }
     if city:
         options = requests.get(cdek_settings.SUGGEST_CITIES_URL.format(city), headers=headers)
-        city_code = options.json()[0].get('code') if options.json() else city_code
-    
+        match options.status_code:
+            case 401:
+                logging.error({'error': 'Unauthorized', 'detail': 'Invalid token for CDEK API'})
+            case 200:
+                city_code = options.json()[0].get('code') or city_code
+            case _:
+                logging.error({
+                    'error': 'Unexpected response from CDEK API', 
+                    'status_code': options.status_code,
+                    'detail': options.text,
+                })
+
     response = requests.get(cdek_settings.API_URL + f'&city_code={city_code}', headers=headers)
 
     if response.status_code == 200:
         return JsonResponse(response.json(), safe=False)
+    logging.error({'error': 'Ошибка запроса к CDEK API', 'detail': response.json()})
     return JsonResponse({"error": "Ошибка запроса к CDEK"}, status=response.status_code)
 
 

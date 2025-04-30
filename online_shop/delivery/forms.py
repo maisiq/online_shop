@@ -5,10 +5,10 @@ from .models import Delivery
 
 class OptDeliveryForm(forms.Form):
     '''
-        Form for choosing delivery during order process.
-        If no user passed when init then returns no Delivery objects.
-
+    Form for choosing delivery during order process.
+    If no user passed when init then returns no Delivery objects.
     '''
+
     delivery = forms.ModelChoiceField(
         Delivery.objects.none(),
         widget=forms.Select,

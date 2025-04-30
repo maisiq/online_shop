@@ -1,4 +1,5 @@
 import json
+import logging
 from decimal import ROUND_HALF_UP, Decimal
 
 import stripe
@@ -54,10 +55,9 @@ def create_checkout_session(r: HttpRequest):
             # currency='rub',
         )
     except Exception as e:
-        print(e)
+        logging.error(e)
         return redirect('/')
 
-    # return JsonResponse(line_items, safe=False)
     return redirect(checkout_session.url, code=303)
 
 
@@ -67,6 +67,9 @@ def success(r: HttpRequest):
 @require_POST
 @csrf_exempt
 def webhook(r: HttpRequest):
+    '''
+    More about Stripe's event types: https://docs.stripe.com/api/events/types
+    '''
     payload = r.body
     event = None
 
@@ -88,13 +91,14 @@ def webhook(r: HttpRequest):
         return HttpResponse(status=400)
 
     # Handle the event
-    if event.type == 'payment_intent.succeeded':
-        payment_intent: stripe.PaymentIntent = event.data.object 
-        # print(payment_intent)
-    elif event.type == 'checkout.session.completed':
-        checkout_session_completed: stripe.PaymentIntent = event.data.object 
-        if order_id := checkout_session_completed.metadata.get('order_id'):
-            order = Order.objects.get(order_id=order_id)
-            order.paid = True
-            order.save()
+    match event.type:
+        case 'checkout.session.completed':
+            checkout_session_completed: stripe.PaymentIntent = event.data.object 
+            if order_id := checkout_session_completed.metadata.get('order_id'):
+                order = Order.objects.get(order_id=order_id)
+                order.paid = True
+                order.save()
+                logging.info({'event': 'stripe_payment_completed', 'order': str(order.id)})
+        case _:
+            logging.info({'event': event.type, 'detail': event.data})
     return HttpResponse(status=200)
