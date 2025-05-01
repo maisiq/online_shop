@@ -1,13 +1,10 @@
 import os
 from pathlib import Path
 
-import dotenv
 from decouple import Config, RepositoryEnv
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
-
-dotenv.load_dotenv(BASE_DIR / '.env')
 
 config = Config(RepositoryEnv(BASE_DIR / '.env'))
 
