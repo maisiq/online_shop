@@ -2,20 +2,23 @@ import os
 from pathlib import Path
 
 import dotenv
+from decouple import Config, RepositoryEnv
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 dotenv.load_dotenv(BASE_DIR / '.env')
 
+config = Config(RepositoryEnv(BASE_DIR / '.env'))
+
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', None)
+SECRET_KEY = config('DJANGO_SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.getenv('DJANGO_DEBUG', False)
+DEBUG = config('DJANGO_DEBUG', default=False, cast=bool)
 
 ALLOWED_HOSTS = []
 
@@ -85,11 +88,11 @@ ASGI_APPLICATION = 'online_shop.config.asgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.getenv('DB_NAME'),
-        'HOST': os.getenv('DB_HOST', 'localhost'),
-        'USER': os.getenv('DB_USER'),
-        'PORT': os.getenv('DB_PORT', 5432),
-        'PASSWORD': os.getenv('DB_PASSWORD'),
+        'NAME': config('DB_NAME'),
+        'HOST': config('DB_HOST', 'localhost'),
+        'USER': config('DB_USER'),
+        'PORT': config('DB_PORT', 5432),
+        'PASSWORD': config('DB_PASSWORD'),
     }
 }
 
