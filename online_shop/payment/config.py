@@ -4,6 +4,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class StripeConfig(BaseSettings):
     API_KEY: str
+    WEBHOOK_SECRET: str
 
     model_config = SettingsConfigDict(
         env_prefix='STRIPE_',
