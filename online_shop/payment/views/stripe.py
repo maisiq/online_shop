@@ -1,4 +1,3 @@
-import json
 import logging
 from decimal import ROUND_HALF_UP, Decimal
 
@@ -13,6 +12,8 @@ from online_shop.orders.models import Order
 from online_shop.payment.config import stripe_config
 
 stripe.api_key = stripe_config.API_KEY
+
+logger = logging.getLogger('django')
 
 
 # @require_POST
@@ -55,7 +56,7 @@ def create_checkout_session(r: HttpRequest):
             # currency='rub',
         )
     except Exception as e:
-        logging.error(e)
+        logger.error(e)
         return redirect('/')
 
     return redirect(checkout_session.url, code=303)
@@ -63,6 +64,7 @@ def create_checkout_session(r: HttpRequest):
 
 def success(r: HttpRequest):
     return JsonResponse({'success': True})
+
 
 @require_POST
 @csrf_exempt
@@ -90,7 +92,9 @@ def webhook(r: HttpRequest):
                 order = Order.objects.get(order_id=order_id)
                 order.paid = True
                 order.save()
-                logging.info({'event': 'stripe_payment_completed', 'order': str(order.id)})
+                logger.info({'event': event.type, 'order': str(order.id)})
+            else:
+                logger.warning({'event': event.type, 'detail': 'order_id in Stripe event not found'})
         case _:
-            logging.info({'event': event.type, 'detail': event.data})
+            logger.debug({'event': event.type, 'detail': event.data})
     return HttpResponse(status=200)
