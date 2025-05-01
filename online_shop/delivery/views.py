@@ -15,6 +15,8 @@ from .forms import CreateDeliveryForm, OptDeliveryForm
 from .models import Delivery
 from .utils import get_cdek_token
 
+logger = logging.getLogger('django')
+
 
 def cdek_deliverypoints(request: HttpRequest):
     '''
@@ -38,11 +40,11 @@ def cdek_deliverypoints(request: HttpRequest):
         options = requests.get(cdek_settings.SUGGEST_CITIES_URL.format(city), headers=headers)
         match options.status_code:
             case 401:
-                logging.error({'error': 'Unauthorized', 'detail': 'Invalid token for CDEK API'})
+                logger.error({'error': 'Unauthorized', 'detail': 'Invalid token for CDEK API'})
             case 200:
                 city_code = options.json()[0].get('code') or city_code
             case _:
-                logging.error({
+                logger.error({
                     'error': 'Unexpected response from CDEK API', 
                     'status_code': options.status_code,
                     'detail': options.text,
@@ -52,7 +54,7 @@ def cdek_deliverypoints(request: HttpRequest):
 
     if response.status_code == 200:
         return JsonResponse(response.json(), safe=False)
-    logging.error({'error': 'Ошибка запроса к CDEK API', 'detail': response.json()})
+    logger.error({'error': 'Ошибка запроса к CDEK API', 'detail': response.json()})
     return JsonResponse({"error": "Ошибка запроса к CDEK"}, status=response.status_code)
 
 
